@@ -69,7 +69,12 @@ function create() {
   });
 
   this.blueScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#0000FF' });
-  this.redScoreText = this.add.text(584, 16, '', { fontSize: '32px', fill: '#FF0000' });
+  // this.blueScoreText.fixedToCamera = true;
+  this.blueScoreText.setScrollFactor(0,0);
+  this.redScoreText = this.add.text(window.innerWidth - 216, 16, '', { fontSize: '32px', fill: '#FF0000' });
+  // this.redScoreText.fixedToCamera = true;
+  this.redScoreText.setScrollFactor(0,0);
+
     
   this.socket.on('scoreUpdate', function (scores) {
     self.blueScoreText.setText('Blue: ' + scores.blue);
