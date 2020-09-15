@@ -23,10 +23,19 @@ function preload() {
   this.load.image('ship', 'assets/playerShip1_blue.png');
   this.load.image('otherPlayer', 'assets/enemyBlack5.png');
   this.load.image('star', 'assets/star_gold.png');
+  this.load.image('spacebg', 'assets/spacebg.jpg');
 }
  
 function create() {
   var self = this;
+
+  // create an tiled sprite with the size of our game screen
+  this.spacebg = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, "spacebg");
+  // Set its pivot to the top left corner
+  this.spacebg.setOrigin(0, 0);
+  // fixe it so it won't move when the camera moves.
+  // Instead we are moving its texture on the update
+  this.spacebg.setScrollFactor(0);
   this.socket = io();
   this.otherPlayers = this.physics.add.group();
   this.socket.on('currentPlayers', function (players) {
@@ -61,9 +70,13 @@ function create() {
   });
 
   this.socket.on('starLocation', function (starLocation) {
-    if (self.star) self.star.destroy();
-    self.star = self.physics.add.image(starLocation.x, starLocation.y, 'star');
+    if (self.star) {
+      self.star.destroy();
+    }
+    self.star = self.physics.add.sprite(starLocation.x, starLocation.y, 'star');
     self.physics.add.overlap(self.ship, self.star, function () {
+      // debugger;
+      // self.star.destroy();
       this.socket.emit('starCollected');
     }, null, self);
   });
@@ -80,7 +93,6 @@ function create() {
     self.blueScoreText.setText('Blue: ' + scores.blue);
     self.redScoreText.setText('Red: ' + scores.red);
   });
-
 
 }
  
@@ -100,7 +112,7 @@ function update() {
       this.ship.setAcceleration(0);
     }
   
-    this.physics.world.wrap(this.ship, 5);
+    // this.physics.world.wrap(this.ship, 5);
   
     // emit player movement
     var x = this.ship.x;
@@ -117,10 +129,15 @@ function update() {
       rotation: this.ship.rotation
     };
   }
+
+
+  // scroll the texture of the tilesprites proportionally to the camera scroll
+  this.spacebg.tilePositionX = this.cameras.main.scrollX * .3;
+  this.spacebg.tilePositionY = this.cameras.main.scrollY * .3;
 }
 
 function addPlayer(self, playerInfo) {
-  self.ship = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'ship').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
+  self.ship = self.physics.add.image(playerInfo.x, playerInfo.y, 'ship').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
   if (playerInfo.team === 'blue') {
     self.ship.setTint(0x0000ff);
   } else {
@@ -129,13 +146,14 @@ function addPlayer(self, playerInfo) {
   self.ship.setDrag(100);
   self.ship.setAngularDrag(100);
   self.ship.setMaxVelocity(200);
+  self.ship.setCollideWorldBounds(true);
 
   self.cameras.main.startFollow(self.ship);
 
 }
 
 function addOtherPlayers(self, playerInfo) {
-  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
+  const otherPlayer = self.add.image(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(53, 40);
   if (playerInfo.team === 'blue') {
     otherPlayer.setTint(0x0000ff);
   } else {
